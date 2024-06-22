@@ -3,6 +3,7 @@ import { View, Image } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
 import LoginScreenStyles from '../styles/LoginScreenStyles';
+import api from '../../api';
 
 interface LoginScreenProps {
   navigation: NavigationProp<any, any>;
@@ -12,9 +13,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
-  const handleLogin = () => {
-    
+
+  const handleLogin = async () => {
+    try {
+      const response = await api.post('/auth/logIn', { email, password });
+      if (response.status === 200) {
+        // Guardar el token o cualquier dato necesario y navegar a la pantalla principal
+        navigation.navigate('Home');
+      }
+    } catch (error) {
+      setError('Credenciales incorrectas');
+    }
   };
 
   return (

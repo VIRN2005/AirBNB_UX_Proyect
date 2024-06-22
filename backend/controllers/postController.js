@@ -22,7 +22,7 @@ async function run() {
 
 run().catch(console.dir);
 
-const database = client.db("Examen2UX");
+const database = client.db("Examen2UX"); //CAMBIAR ESTO
 const posts = database.collection("Post");
 const Post = require("../models/postModel");
 const { query } = require("express");

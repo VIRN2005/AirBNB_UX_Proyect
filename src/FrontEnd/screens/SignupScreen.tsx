@@ -3,19 +3,26 @@ import { View, Image } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
 import SignupScreenStyles from '../styles/SignupScreenStyles';
+import api from '../../api';
 
-
-interface LoginScreenProps {
+interface SignupScreenProps {
   navigation: NavigationProp<any, any>;
 }
 
-const SignupScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSignup = () => {
-    
+  const handleSignup = async () => {
+    try {
+      const response = await api.post('/auth/createUser', { email, password });
+      if (response.status === 200) {
+        navigation.navigate('Login');
+      }
+    } catch (error) {
+      setError('No se pudo crear el usuario');
+    }
   };
 
   return (
