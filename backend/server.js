@@ -25,7 +25,7 @@ app.options('*', cors())
 
 const firebaseApp = initializeApp(firebaseConfig);
 
-let port = 3001;
+let port = 8000;
 
 app.listen(port, () => {
     console.log('Servidor corriendo en el puerto', port)
