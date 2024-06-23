@@ -3,7 +3,9 @@ import { View, Image } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
 import LoginScreenStyles from '../styles/LoginScreenStyles';
-import api from '../../api';
+//import api from '../../api';
+import axios from 'axios';
+import firebase from 'firebase/compat/app';
 
 interface LoginScreenProps {
   navigation: NavigationProp<any, any>;
@@ -16,13 +18,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await api.post('/auth/logIn', { email, password });
-      if (response.status === 200) {
-        // Guardar el token o cualquier dato necesario y navegar a la pantalla principal
-        navigation.navigate('Home');
-      }
+      await firebase.auth().signInWithEmailAndPassword(email, password);
     } catch (error) {
-      setError('Credenciales incorrectas');
+      setError(error.message);
     }
   };
 
