@@ -1,3 +1,16 @@
+/*const express = require("express");
+const port = process.env.PORT || 8000;
+
+const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
+app.listen(port, () => console.log(Server started on ${port}));*/
+
 const express = require('express');
 
 const bodyParser = require('body-parser');
@@ -173,18 +186,18 @@ run().catch(console.dir);
 
 const database = client.db("proyectoUX");
 const posts = database.collection("Lugares");
-const Post = require("./models/postModel");
 
 app.post('/createLugar', async (req, res)=>{
   await client.connect();
-  const post = await new Post({
-    owner: req.body.owner,
-    ubicacion: req.body.ubicacion,
-    cantidadPersonas: req.body.cantidadPersonas,
-    fechaEntrada: req.body.fechaEntrada,
-    fechaSalida: req.body.fechaSalida
-  });
-  const result = await posts.insertOne(post);
+  const owner = req.body.owner
+  const nombre =  req.body.nombre
+  const categoria = req.body.categoria
+  const ubicacion = req.body.ubicacion
+  cantidadPersonas = req.body.cantidadPersonas
+  fechaEntrada =  req.body.fechaEntrada
+  fechaSalida = req.body.fechaSalida
+  const lugar = {owner, nombre, categoria,ubicacion, cantidadPersonas, fechaEntrada, fechaSalida} 
+  const result = await posts.insertOne(lugar);
   if (!result.insertedId) {
     res.status(500).send({
       msg: "No se pudo crear el lugar",
@@ -252,7 +265,13 @@ app.put('/editLugar', async (req, res)=>{
     }
 
     const filter = { _id: new ObjectId(req.params.id) };
-    const update = { $set: { titulo: req.body.titulo, texto: req.body.texto } };
+    const update = { $set: { owner: req.body.owner,
+      nombre: req.body.nombre,
+      categoria: req.body.categoria,
+      ubicacion: req.body.ubicacion,
+      cantidadPersonas: req.body.cantidadPersonas,
+      fechaEntrada: req.body.fechaEntrada,
+      fechaSalida: req.body.fechaSalida} };
     const options = { upsert: false };
 
     const result = await posts.updateOne(filter, update, options);

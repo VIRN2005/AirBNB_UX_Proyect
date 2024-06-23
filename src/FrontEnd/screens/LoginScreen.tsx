@@ -5,6 +5,7 @@ import { NavigationProp } from '@react-navigation/native';
 import LoginScreenStyles from '../styles/LoginScreenStyles';
 //import api from '../../api';
 import axios from 'axios';
+import firebase from 'firebase/compat/app';
 
 interface LoginScreenProps {
   navigation: NavigationProp<any, any>;
@@ -17,17 +18,43 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
+      // await firebase.auth().signInWithEmailAndPassword(email, password);
+      let url = "https://9a01-2803-4600-1113-2a7-8c49-2b68-9bfa-71c2.ngrok-free.app/auth/logIn"; 
+      console.log("SENDING TO BACKEND",url)
+  
+      const body = {
+        email:email,
+        password: password,
+      }
+  
+      const config = {
+        headers: {
+          'Content-Type': ' application/x-www-form-urlencoded',
+      }
+    }
+    axios.post(url,body,config).then((res)=>{ 
+        console.log("La respuesta del backend ",res.data)
+        navigation.navigate('Home');
+      })
+      .catch((error)=>{
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Response error:', error.response.data);
+          console.error('Status:', error.response.status);
+          console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+          // The request was made but no response was received
+          console.error('No response:', error.request);
+      } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('Error', error.message);
+      }
+      console.error('Config:', error.config);
+  
+      } )
     } catch (error) {
-      // if (error.response) {
-      //   console.error("Respuesta de error del servidor:", error.response.data);
-      //   console.error("Código de estado:", error.response.status);
-      // } else if (error.request) {
-      //   console.error("No se recibió respuesta del servidor:", error.request);
-      // } else {
-      //   console.error("Error al configurar la solicitud:", error.message);
-      // }
-      setError('Credenciales incorrectas');
+      setError(error.message);
     }
   };
 

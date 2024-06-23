@@ -4,8 +4,8 @@ const postSchema = new mongoose.Schema({
     owner: { type: String, required: true },
     ubicacion: { type: String, required: true },
     cantidadPersonas: {type: Number, require: true},
-    fechaEntrada: {type: Date, require: true},
-    fechaSalida: {type: Date, require: true},
+    fechaEntrada: {type: String, require: true},
+    fechaSalida: {type: String, require: true},
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   }, { timestamps: true });
 

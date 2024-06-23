@@ -17,7 +17,7 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
 
   const handleSignup = async () => {
     
-    let url = "https://25fe-190-242-26-188.ngrok-free.app/auth/createUser"; 
+    let url = "https://9a01-2803-4600-1113-2a7-8c49-2b68-9bfa-71c2.ngrok-free.app/auth/createUser"; 
     console.log("SENDING TO BACKEND",url)
 
     const body = {
