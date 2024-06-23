@@ -193,10 +193,13 @@ app.post('/createLugar', async (req, res)=>{
   const nombre =  req.body.nombre
   const categoria = req.body.categoria
   const ubicacion = req.body.ubicacion
+  const precio = req.body.precio
+  const horario = req.body.horario
+  const rating = req.body.rating
   cantidadPersonas = req.body.cantidadPersonas
   fechaEntrada =  req.body.fechaEntrada
   fechaSalida = req.body.fechaSalida
-  const lugar = {owner, nombre, categoria,ubicacion, cantidadPersonas, fechaEntrada, fechaSalida} 
+  const lugar = {owner, nombre, categoria,ubicacion, precio, horario, rating, cantidadPersonas, fechaEntrada, fechaSalida} 
   const result = await posts.insertOne(lugar);
   if (!result.insertedId) {
     res.status(500).send({
@@ -269,6 +272,9 @@ app.put('/editLugar', async (req, res)=>{
       nombre: req.body.nombre,
       categoria: req.body.categoria,
       ubicacion: req.body.ubicacion,
+      precio: req.body.precio,
+      horario: req.body.horario,
+      rating: req.body.rating,
       cantidadPersonas: req.body.cantidadPersonas,
       fechaEntrada: req.body.fechaEntrada,
       fechaSalida: req.body.fechaSalida} };
