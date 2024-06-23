@@ -1,16 +1,3 @@
-/*const express = require("express");
-const port = process.env.PORT || 8000;
-
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
-
-app.listen(port, () => console.log(`Server started on ${port}`));*/
-
 const express = require('express');
 
 const bodyParser = require('body-parser');
@@ -160,3 +147,116 @@ app.delete('/delete', (req, res) => {
     mensaje: 'Usuario eliminado con exito',
   });
 });
+
+//MongoDB
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://hamjosue33:HKSfcVZV49QgMNq1@proyectoux.qo7il74.mongodb.net/?retryWrites=true&w=majority&appName=proyectoUX";
+const ObjectId = require('mongodb').ObjectId;
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+async function run() {
+  try {
+    await client.connect();
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    await client.close();
+  }
+}
+run().catch(console.dir);
+
+const database = client.db("proyectoUX");
+const posts = database.collection("Lugares");
+const Post = require("./models/postModel");
+
+app.post('/createLugar', async (req, res)=>{
+  await client.connect();
+  const post = await new Post({
+    owner: req.body.owner,
+    ubicacion: req.body.ubicacion,
+    cantidadPersonas: req.body.cantidadPersonas,
+    fechaEntrada: req.body.fechaEntrada,
+    fechaSalida: req.body.fechaSalida
+  });
+  const result = await posts.insertOne(post);
+  if (!result.insertedId) {
+    res.status(500).send({
+      msg: "No se pudo crear el lugar",
+    });
+  }
+  res.status(200).send({
+    msg: "Lugar creado exitosamente",
+    data: result.insertedId,
+  });
+  await client.close();
+})
+
+app.get('/listLugares', async (req, res)=>{
+  await client.connect();
+  if ((await posts.countDocuments()) === 0) {
+    res.status(200).send({
+      msg: "No hay lugares guardados",
+    });
+  }
+  const query = posts.find();
+  let arrPosts = [];
+  for await (const doc of query) {
+    arrPosts.push(doc);
+  }
+  res.status(200).send({
+    documentos: arrPosts,
+  });
+  await client.close();
+})
+
+
+app.delete('/deleteLugar', async (req, res)=>{
+await client.connect();
+  if ((await posts.countDocuments()) === 0) {
+    res.status(200).send({
+      msg: "No hay lugares guardados",
+    });
+  }
+
+  if (await !posts.findOne({ _id: new ObjectId(req.params.id) })) {
+    return res.status(500).send({
+      msg: `No se encontró ningún lugar con id ${res.body.id}`,
+    });
+  }
+  
+  
+  const filter = { _id: new ObjectId(req.params.id) };
+  const result = await posts.deleteOne(filter);
+  res.status(200).send("El lugar fue eliminado exitosamente");
+  await client.close();
+})
+
+
+app.put('/editLugar', async (req, res)=>{
+  await client.connect();
+    if ((await posts.countDocuments()) === 0) {
+      res.status(200).send({
+        msg: "No hay lugares guardados",
+      });
+    }
+    if (await !posts.findOne({ _id: new ObjectId(req.params.id) })) {
+      return res.status(500).send({
+        msg: `No se encontró ningún lugar con id ${res.body.id}`,
+      });
+    }
+
+    const filter = { _id: new ObjectId(req.params.id) };
+    const update = { $set: { titulo: req.body.titulo, texto: req.body.texto } };
+    const options = { upsert: false };
+
+    const result = await posts.updateOne(filter, update, options);
+
+    res.status(200).send("El lugar fue editado exitosamente");
+    await client.close();
+})
