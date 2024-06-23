@@ -2,6 +2,8 @@ const mongoose = require ('mongoose');
 
 const postSchema = new mongoose.Schema({
     owner: { type: String, required: true },
+    nombre: { type: String, required: true },
+    categoria: { type: String, required: true },
     ubicacion: { type: String, required: true },
     cantidadPersonas: {type: Number, require: true},
     fechaEntrada: {type: String, require: true},
