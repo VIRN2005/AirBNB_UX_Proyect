@@ -5,7 +5,6 @@ import { NavigationProp } from '@react-navigation/native';
 import LoginScreenStyles from '../styles/LoginScreenStyles';
 //import api from '../../api';
 import axios from 'axios';
-import firebase from 'firebase/compat/app';
 
 interface LoginScreenProps {
   navigation: NavigationProp<any, any>;
@@ -18,9 +17,24 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
+      console.log("Arriba del response");
+      const data = { email, password };
+      console.log("Datos enviados:", data);
+      const response = await axios.post('http://localhost:8000/logInFirebase', data);
+      console.log("Respuesta del servidor:", response.data);
+      if (response.status === 200) {
+        navigation.navigate('Home');
+      }
     } catch (error) {
-      setError(error.message);
+      // if (error.response) {
+      //   console.error("Respuesta de error del servidor:", error.response.data);
+      //   console.error("Código de estado:", error.response.status);
+      // } else if (error.request) {
+      //   console.error("No se recibió respuesta del servidor:", error.request);
+      // } else {
+      //   console.error("Error al configurar la solicitud:", error.message);
+      // }
+      setError('Credenciales incorrectas');
     }
   };
 
