@@ -17,14 +17,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      console.log("Arriba del response");
-      const data = { email, password };
-      console.log("Datos enviados:", data);
-      const response = await axios.post('http://localhost:8000/logInFirebase', data);
-      console.log("Respuesta del servidor:", response.data);
-      if (response.status === 200) {
-        navigation.navigate('Home');
-      }
+      await firebase.auth().signInWithEmailAndPassword(email, password);
     } catch (error) {
       // if (error.response) {
       //   console.error("Respuesta de error del servidor:", error.response.data);

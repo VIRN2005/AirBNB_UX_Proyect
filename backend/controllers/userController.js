@@ -23,6 +23,7 @@ const registerUser = (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const auth = getAuth();
+  console.log("hello from BE",email, password);
   createUserWithEmailAndPassword(auth, email, password)
     .then(userCredential => {
       res.status(200).send({
