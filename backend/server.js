@@ -49,6 +49,9 @@ app.listen(port, () => {
   console.log('Servidor corriendo en el puerto', port);
 });
 
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
 app.get('/saludar', (req, res) => {
   res.status(200).send('Hola wey!');
 });

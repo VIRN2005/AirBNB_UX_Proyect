@@ -18,7 +18,41 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
+      // await firebase.auth().signInWithEmailAndPassword(email, password);
+      let url = "https://25fe-190-242-26-188.ngrok-free.app/auth/logIn"; 
+      console.log("SENDING TO BACKEND",url)
+  
+      const body = {
+        email:email,
+        password: password,
+      }
+  
+      const config = {
+        headers: {
+          'Content-Type': ' application/x-www-form-urlencoded',
+      }
+    }
+    axios.post(url,body,config).then((res)=>{ 
+        console.log("La respuesta del backend ",res.data)
+        navigation.navigate('signup');
+      })
+      .catch((error)=>{
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Response error:', error.response.data);
+          console.error('Status:', error.response.status);
+          console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+          // The request was made but no response was received
+          console.error('No response:', error.request);
+      } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('Error', error.message);
+      }
+      console.error('Config:', error.config);
+  
+      } )
     } catch (error) {
       setError(error.message);
     }
