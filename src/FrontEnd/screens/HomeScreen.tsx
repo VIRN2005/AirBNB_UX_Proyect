@@ -32,6 +32,7 @@ const categoryMap: { [key: string]: string } = {
   terrain: 'Camping',
   'trending-up': 'Tendencias',
   whatshot: 'Condominio',
+  
 };
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
@@ -127,7 +128,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const renderItem = ({ item }: { item: Listing }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('Details', { item })}>
+    //<TouchableOpacity onPress={() => navigation.navigate('Details', { item })}>
       <Card style={HomeScreenStyles.card}>
         <Image source={{ uri: item.url }} style={HomeScreenStyles.image} />
         <Card.Content>
@@ -154,7 +155,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </TouchableOpacity>
         </Card.Content>
       </Card>
-    </TouchableOpacity>
+    //</TouchableOpacity>
   );
 
   return (
@@ -218,7 +219,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         />
       )}
       <View style={HomeScreenStyles.navbarBottom}>
-        {['home', 'favorite', 'flight-takeoff', 'mail', 'person'].map(
+        {['favorite','home',  'flight-takeoff', 'mail', 'person'].map(
           (iconName, index) => (
             <TouchableOpacity
               key={iconName}
