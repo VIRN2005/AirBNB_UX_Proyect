@@ -197,10 +197,10 @@ app.post('/createLugar', async (req, res)=>{
   const precio = req.body.precio
   const horario = req.body.horario
   const rating = req.body.rating
-  cantidadPersonas = req.body.cantidadPersonas
-  fechaEntrada =  req.body.fechaEntrada
-  fechaSalida = req.body.fechaSalida
-  const lugar = {owner, nombre, categoria,ubicacion,url, precio, horario, rating, cantidadPersonas, fechaEntrada, fechaSalida}
+  const cantidadPersonas = req.body.cantidadPersonas
+  const fechaEntrada =  req.body.fechaEntrada
+  const fechaSalida = req.body.fechaSalida
+  const lugar = {owner, nombre, categoria,ubicacion,url, precio, horario, rating, cantidadPersonas, fechaEntrada, fechaSalida} 
   const result = await posts.insertOne(lugar);
   if (!result.insertedId) {
     res.status(500).send({
@@ -273,7 +273,6 @@ app.put('/editLugar', async (req, res)=>{
       nombre: req.body.nombre,
       categoria: req.body.categoria,
       ubicacion: req.body.ubicacion,
-      url: req.body.url,
       precio: req.body.precio,
       horario: req.body.horario,
       rating: req.body.rating,
@@ -287,3 +286,70 @@ app.put('/editLugar', async (req, res)=>{
     res.status(200).send("El lugar fue editado exitosamente");
     await client.close();
 })
+
+const reservas = database.collection("reservas");
+
+app.post('/createReserva', async (req, res)=>{
+  await client.connect();
+  const correoCliente = req.body.correoCliente
+  const owner = req.body.owner
+  const nombre =  req.body.nombre
+  const categoria = req.body.categoria
+  const ubicacion = req.body.ubicacion
+  const precio = req.body.precio
+  const fechaEntrada =  req.body.fechaEntrada
+  const fechaSalida = req.body.fechaSalida
+  
+  const reserva = {correoCliente, owner, nombre, categoria, ubicacion, precio, fechaEntrada, fechaSalida}
+  const result = await reservas.insertOne(reserva);
+  if (!result.insertedId) {
+    res.status(500).send({
+      msg: "No se pudo crear la reserva",
+    });
+  }
+  res.status(200).send({
+    msg: "Reserva creada exitosamente",
+    data: result.insertedId,
+  });
+  await client.close();
+})
+
+
+app.get('/listReservas', async (req, res)=>{
+  await client.connect();
+  if ((await reservas.countDocuments()) === 0) {
+    res.status(200).send({
+      msg: "No hay reservas guardadas",
+    });
+  }
+  const query = reservas.find();
+  let arrPosts = [];
+  for await (const doc of query) {
+    arrPosts.push(doc);
+  }
+  res.status(200).send({
+    documentos: arrPosts,
+  });
+  await client.close();
+})
+
+app.delete('/deleteReserva', async (req, res)=>{
+  await client.connect();
+    if ((await reservas.countDocuments()) === 0) {
+      res.status(200).send({
+        msg: "No hay reservas guardadas",
+      });
+    }
+  
+    if (await !reservas.findOne({ _id: new ObjectId(req.params.id) })) {
+      return res.status(500).send({
+        msg: `No se encontró ninguna reserva con id ${res.body.id}`,
+      });
+    }
+    
+    
+    const filter = { _id: new ObjectId(req.params.id) };
+    const result = await reservas.deleteOne(filter);
+    res.status(200).send("La reserva fue eliminada exitosamente");
+    await client.close();
+  })
