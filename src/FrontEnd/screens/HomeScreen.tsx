@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Image,
@@ -6,11 +6,15 @@ import {
   FlatList,
   Text,
   TextInput,
+  Button,
+  Alert,
 } from 'react-native';
-import {Card, IconButton} from 'react-native-paper';
+import { Card, IconButton } from 'react-native-paper';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {NavigationProp} from '@react-navigation/native';
+import { NavigationProp } from '@react-navigation/native';
 import HomeScreenStyles from '../styles/HomeScreenStyles';
+import axios from 'axios';
+import api from '../../api';
 
 interface Listing {
   id: string;
@@ -28,14 +32,40 @@ interface HomeScreenProps {
   navigation: NavigationProp<any, any>;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [search, setSearch] = useState('');
   const [selectedNavItem, setSelectedNavItem] = useState<number | null>(null);
 
   useEffect(() => {
-   
+    fetchListings();
   }, []);
+
+  useEffect(() => {
+    filterListings();
+  }, [search, listings]);
+
+  const fetchListings = async () => {
+    try {
+      const response = await api.get('/listLugares');
+      setListings(response.data.documentos);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+    }
+  };
+
+  const filterListings = () => {
+    if (search === '') {
+      setFilteredListings([]);
+    } else {
+      const filtered = listings.filter(listing =>
+        listing.title.toLowerCase().includes(search.toLowerCase()) ||
+        listing.location.toLowerCase().includes(search.toLowerCase())
+      );
+      setFilteredListings(filtered);
+    }
+  };
 
   const handleNavItemPress = (index: number) => {
     setSelectedNavItem(index);
@@ -49,14 +79,55 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
     setSelectedNavItem(null);
   };
 
-  const filteredListings = listings.filter(listing =>
-    listing.title.toLowerCase().includes(search.toLowerCase()),
-  );
+  const handleCreateLugar = async () => {
+    const newLugar = {
+      owner: 'Victor Romero',
+      nombre: 'Full Luxury Condo',
+      categoria: 'Hotel',
+      ubicacion: 'Tegucigalpa, Honduras',
+      url:'https://postandporch.com/cdn/shop/articles/AdobeStock_209124760.jpg?v=1662575433&width=1440',
+      precio: 1000,
+      horario: '9 AM - 5 PM',
+      rating: 4.9,
+      cantidadPersonas: 10,
+      fechaEntrada: '2024-06-25',
+      fechaSalida: '2024-06-26',
+    };
 
-  const renderItem = ({item}: {item: Listing}) => (
-    <TouchableOpacity onPress={() => navigation.navigate('Details', {item})}>
+    try {
+      const response = await api.post('/createLugar', newLugar);
+      Alert.alert('Success', 'Lugar creado exitosamente');
+      fetchListings();
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo crear el lugar');
+      console.error('Error creating lugar:', error);
+    }
+  };
+
+  const handleFavorites = async () => {
+    const favoriteListings = listings.filter(listing => listing.rating >= 4);
+
+    try {
+      await Promise.all(
+        favoriteListings.map(async listing => {
+          const favoriteData = {
+            userId: 'someUserId',
+            lugarId: listing.id,
+          };
+          await api.post('/favoriteLugar', favoriteData);
+        })
+      );
+      Alert.alert('Success', 'Favoritos actualizados');
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo actualizar los favoritos');
+      console.error('Error updating favorites:', error);
+    }
+  };
+
+  const renderItem = ({ item }: { item: Listing }) => (
+    <TouchableOpacity onPress={() => navigation.navigate('Details', { item })}>
       <Card style={HomeScreenStyles.card}>
-        <Image source={{uri: item.image}} style={HomeScreenStyles.image} />
+        <Image source={{ uri: item.image }} style={HomeScreenStyles.image} />
         <Card.Content>
           <View style={HomeScreenStyles.textContainer}>
             <View style={HomeScreenStyles.header}>
@@ -91,42 +162,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
           color="#000"
           style={HomeScreenStyles.filterIcon}
         />
-      </View>
-      <View style={HomeScreenStyles.navbarTop}>
-        {['hotel', 'beach-access', 'terrain', 'trending-up', 'whatshot'].map(
-          (iconName, index) => (
-            <TouchableOpacity
-              key={iconName}
-              style={[
-                HomeScreenStyles.navItem,
-                selectedNavItem === index
-                  ? HomeScreenStyles.navItemSelected
-                  : null,
-              ]}
-              onPress={() => handleNavItemPress(index)}
-              onPressIn={() => handleNavItemHover(index)}
-              onPressOut={clearNavItemHover}>
-              <IconButton icon={iconName} size={30} />
-              <Text
-                style={[
-                  HomeScreenStyles.navText,
-                  selectedNavItem === index
-                    ? HomeScreenStyles.navTextBold
-                    : null,
-                ]}>
-                {iconName === 'hotel'
-                  ? 'Rooms'
-                  : iconName === 'beach-access'
-                  ? 'Beachfront'
-                  : iconName === 'terrain'
-                  ? 'Camping'
-                  : iconName === 'trending-up'
-                  ? 'Trending'
-                  : 'OMG!'}
-              </Text>
-            </TouchableOpacity>
-          ),
-        )}
       </View>
       <FlatList
         data={
@@ -181,6 +216,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
           ),
         )}
       </View>
+      <Button title="Create New Lugar" onPress={handleCreateLugar} />
+      <Button title="Update Favorites" onPress={handleFavorites} />
     </View>
   );
 };

@@ -19,7 +19,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const handleLogin = async () => {
     try {
       // await firebase.auth().signInWithEmailAndPassword(email, password);
-      let url = "https://0084-2803-4600-1113-2a7-20f0-e375-8a78-6a46.ngrok-free.app/auth/logIn"; 
+      let url = "https://1b3b-2803-4600-1113-2a7-e0d7-8c90-ab14-7b98.ngrok-free.app/auth/logIn"; 
       console.log("SENDING TO BACKEND",url)
   
       const body = {
