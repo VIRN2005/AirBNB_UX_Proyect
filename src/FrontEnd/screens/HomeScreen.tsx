@@ -100,7 +100,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setFilteredCategory(categoryMap[category] || null);
 
     // Mostrar solo favoritos cuando se presiona 'Wishlist'
-    if (index === 1) { // Índice 1 corresponde a 'favorite'
+    if (index === 5) { // Índice 5 corresponde a 'favorite'
       setShowFavoritesOnly(true);
     } else {
       setShowFavoritesOnly(false);
