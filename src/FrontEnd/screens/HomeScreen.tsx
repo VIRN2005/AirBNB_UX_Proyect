@@ -28,6 +28,9 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedNavItem, setSelectedNavItem] = useState<number | null>(null);
+  const [filteredCategory, setFilteredCategory] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetchListings();
@@ -43,16 +46,24 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   };
 
+  const handleNavItemPress = (index: number, category: string) => {
+    setSelectedNavItem(index);
+    setFilteredCategory(category);
+  };
+
   const filterListings = () => {
-    if (search === '') {
-      return listings; // Devolver todos los listings si no hay filtro
-    } else {
+    let filtered = listings;
+    if (search) {
       const lowerCaseSearch = search.toLowerCase();
-      return listings.filter(listing =>
+      filtered = filtered.filter(listing =>
         listing.nombre.toLowerCase().includes(lowerCaseSearch) ||
         listing.ubicacion.toLowerCase().includes(lowerCaseSearch)
       );
     }
+    if (filteredCategory) {
+      filtered = filtered.filter(listing => listing.categoria === filteredCategory);
+    }
+    return filtered;
   };
 
   const renderItem = ({ item }: { item: Listing }) => (
@@ -92,6 +103,43 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           style={HomeScreenStyles.filterIcon}
         />
       </View>
+      <View style={HomeScreenStyles.navbarTop}>
+        {['hotel', 'beach-access', 'terrain', 'trending-up', 'whatshot'].map(
+          (iconName, index) => (
+            <TouchableOpacity
+              key={iconName}
+              style={[
+                HomeScreenStyles.navItem,
+                selectedNavItem === index
+                  ? HomeScreenStyles.navItemSelected
+                  : null,
+              ]}
+              onPress={() => handleNavItemPress(index, iconName)}
+            >
+              <MaterialIcons name={iconName} size={30} />
+              <Text
+                style={[
+                  HomeScreenStyles.navText,
+                  selectedNavItem === index
+                    ? HomeScreenStyles.navTextBold
+                    : null,
+                ]}
+              >
+                {iconName === 'hotel'
+                  ? 'Rooms'
+                  : iconName === 'beach-access'
+                  ? 'Beachfront'
+                  : iconName === 'terrain'
+                  ? 'Camping'
+                  : iconName === 'trending-up'
+                  ? 'Trending'
+                  : 'OMG!'}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
+      </View>
+      
       <FlatList
         data={filterListings()}
         keyExtractor={item => item._id}
