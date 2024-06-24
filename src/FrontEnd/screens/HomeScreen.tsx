@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, TouchableOpacity, FlatList, Text, TextInput, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, FlatList, Text, TextInput, Alert ,ActivityIndicator} from 'react-native';
 import { Card, IconButton } from 'react-native-paper';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { NavigationProp } from '@react-navigation/native';
@@ -24,7 +24,13 @@ interface Listing {
 interface HomeScreenProps {
   navigation: NavigationProp<any, any>;
 }
-
+const categoryMap: { [key: string]: string } = {
+  hotel: 'Hotel',
+  'beach-access': 'Playa',
+  terrain: 'Camping',
+  'trending-up': 'Tendencias',
+  whatshot: 'Condominio'
+};
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [search, setSearch] = useState('');
@@ -43,12 +49,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     } catch (error) {
       console.error('Error fetching listings:', error);
       Alert.alert('Error', 'No se pudo obtener la lista de lugares');
+    } finally {
+      setLoading(false); // Set loading to false after fetching is complete
     }
+    
   };
 
   const handleNavItemPress = (index: number, category: string) => {
     setSelectedNavItem(index);
-    setFilteredCategory(category);
+    setFilteredCategory(categoryMap[category] || null);
   };
 
   const filterListings = () => {
@@ -139,7 +148,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           ),
         )}
       </View>
-      
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
       <FlatList
         data={filterListings()}
         keyExtractor={item => item._id}
@@ -152,7 +163,48 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         )}
       />
+      )}
+      <View style={HomeScreenStyles.navbarBottom}>
+        {['home', 'favorite', 'flight-takeoff', 'mail', 'person'].map(
+          (iconName, index) => (
+            <TouchableOpacity
+              key={iconName}
+              style={[
+                HomeScreenStyles.navItem,
+                selectedNavItem === index + 5
+                  ? HomeScreenStyles.navItemSelected
+                  : null,
+              ]}
+              onPress={() => handleNavItemPress(index + 5, '')}
+            >
+              <IconButton
+                icon={() => <MaterialIcons name={iconName} size={24} />}
+                onPress={() => {}}
+              />
+              <Text
+                style={[
+                  HomeScreenStyles.navText,
+                  selectedNavItem === index + 5
+                    ? HomeScreenStyles.navTextBold
+                    : null,
+                ]}
+              >
+                {iconName === 'home'
+                  ? 'Explore'
+                  : iconName === 'favorite'
+                  ? 'Wishlist'
+                  : iconName === 'flight-takeoff'
+                  ? 'Trips'
+                  : iconName === 'mail'
+                  ? 'Inbox'
+                  : 'Profile'}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
+      </View>
     </View>
+    
   );
 };
 
