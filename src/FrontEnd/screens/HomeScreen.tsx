@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, TouchableOpacity, FlatList, Text, TextInput, Alert ,ActivityIndicator} from 'react-native';
+import { View, Image, TouchableOpacity, FlatList, Text, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Card, IconButton } from 'react-native-paper';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationProp } from '@react-navigation/native';
 import HomeScreenStyles from '../styles/HomeScreenStyles';
 import api from '../../api';
@@ -24,22 +25,27 @@ interface Listing {
 interface HomeScreenProps {
   navigation: NavigationProp<any, any>;
 }
+
 const categoryMap: { [key: string]: string } = {
   hotel: 'Hotel',
   'beach-access': 'Playa',
   terrain: 'Camping',
   'trending-up': 'Tendencias',
-  whatshot: 'Condominio'
+  whatshot: 'Condominio',
 };
+
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [search, setSearch] = useState('');
   const [selectedNavItem, setSelectedNavItem] = useState<number | null>(null);
   const [filteredCategory, setFilteredCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [favorites, setFavorites] = useState<string[]>([]); // Estado para los lugares favoritos
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false); // Estado para mostrar solo favoritos
 
   useEffect(() => {
     fetchListings();
+    loadFavorites(); // Cargar favoritos al montar el componente
   }, []);
 
   const fetchListings = async () => {
@@ -52,25 +58,70 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     } finally {
       setLoading(false); // Set loading to false after fetching is complete
     }
-    
+  };
+
+  const loadFavorites = async () => {
+    try {
+      const storedFavorites = await AsyncStorage.getItem('favorites');
+      if (storedFavorites) {
+        setFavorites(JSON.parse(storedFavorites));
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
+
+  const saveFavorites = async (updatedFavorites: string[]) => {
+    try {
+      await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    } catch (error) {
+      console.error('Error saving favorites:', error);
+    }
+  };
+
+  const toggleFavorite = (id: string) => {
+    const index = favorites.indexOf(id);
+    if (index === -1) {
+      // No está en favoritos, agregarlo
+      const updatedFavorites = [...favorites, id];
+      setFavorites(updatedFavorites);
+      saveFavorites(updatedFavorites); // Guardar en AsyncStorage
+    } else {
+      // Ya está en favoritos, quitarlo
+      const updatedFavorites = [...favorites];
+      updatedFavorites.splice(index, 1);
+      setFavorites(updatedFavorites);
+      saveFavorites(updatedFavorites); // Guardar en AsyncStorage
+    }
   };
 
   const handleNavItemPress = (index: number, category: string) => {
     setSelectedNavItem(index);
     setFilteredCategory(categoryMap[category] || null);
+
+    // Mostrar solo favoritos cuando se presiona 'Wishlist'
+    if (index === 1) { // Índice 1 corresponde a 'favorite'
+      setShowFavoritesOnly(true);
+    } else {
+      setShowFavoritesOnly(false);
+    }
   };
 
   const filterListings = () => {
     let filtered = listings;
     if (search) {
       const lowerCaseSearch = search.toLowerCase();
-      filtered = filtered.filter(listing =>
-        listing.nombre.toLowerCase().includes(lowerCaseSearch) ||
-        listing.ubicacion.toLowerCase().includes(lowerCaseSearch)
+      filtered = filtered.filter(
+        (listing) =>
+          listing.nombre.toLowerCase().includes(lowerCaseSearch) ||
+          listing.ubicacion.toLowerCase().includes(lowerCaseSearch)
       );
     }
     if (filteredCategory) {
-      filtered = filtered.filter(listing => listing.categoria === filteredCategory);
+      filtered = filtered.filter((listing) => listing.categoria === filteredCategory);
+    }
+    if (showFavoritesOnly) {
+      filtered = filtered.filter((listing) => favorites.includes(listing._id));
     }
     return filtered;
   };
@@ -91,6 +142,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <Text style={HomeScreenStyles.rating}>{item.rating}</Text>
             </View>
           </View>
+          <TouchableOpacity
+            onPress={() => toggleFavorite(item._id)}
+            style={{ position: 'absolute', top: 10, right: 10 }}
+          >
+            <MaterialIcons
+              name={favorites.includes(item._id) ? 'favorite' : 'favorite-border'}
+              size={24}
+              color={favorites.includes(item._id) ? '#FF0000' : '#000000'}
+            />
+          </TouchableOpacity>
         </Card.Content>
       </Card>
     </TouchableOpacity>
@@ -134,35 +195,27 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     : null,
                 ]}
               >
-                {iconName === 'hotel'
-                  ? 'Rooms'
-                  : iconName === 'beach-access'
-                  ? 'Beachfront'
-                  : iconName === 'terrain'
-                  ? 'Camping'
-                  : iconName === 'trending-up'
-                  ? 'Trending'
-                  : 'OMG!'}
+                {categoryMap[iconName]}
               </Text>
             </TouchableOpacity>
-          ),
+          )
         )}
       </View>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-      <FlatList
-        data={filterListings()}
-        keyExtractor={item => item._id}
-        renderItem={renderItem}
-        ListFooterComponent={() => (
-          <View style={HomeScreenStyles.footer}>
-            <Text style={HomeScreenStyles.footerText}>
-              Más lugares disponibles...
-            </Text>
-          </View>
-        )}
-      />
+        <FlatList
+          data={filterListings()}
+          keyExtractor={(item) => item._id}
+          renderItem={renderItem}
+          ListFooterComponent={() => (
+            <View style={HomeScreenStyles.footer}>
+              <Text style={HomeScreenStyles.footerText}>
+                Más lugares disponibles...
+              </Text>
+            </View>
+          )}
+        />
       )}
       <View style={HomeScreenStyles.navbarBottom}>
         {['home', 'favorite', 'flight-takeoff', 'mail', 'person'].map(
@@ -200,11 +253,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   : 'Profile'}
               </Text>
             </TouchableOpacity>
-          ),
+          )
         )}
       </View>
     </View>
-    
   );
 };
 
