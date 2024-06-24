@@ -108,6 +108,19 @@ const HomeScreenStyles = StyleSheet.create({
     color: 'salmon', 
     fontFamily: 'TruenoBd',
   },
+  reserveButton: {
+    backgroundColor: '#E40078', // Fuchsia color
+    padding: 8,
+    borderRadius: 5,
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+  },
+  reserveButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
 });
 
 export default HomeScreenStyles;
