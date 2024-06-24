@@ -6,6 +6,8 @@ import LoginScreenStyles from '../styles/LoginScreenStyles';
 //import api from '../../api';
 import axios from 'axios';
 import firebase from 'firebase/compat/app';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 interface LoginScreenProps {
   navigation: NavigationProp<any, any>;
@@ -32,8 +34,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           'Content-Type': ' application/x-www-form-urlencoded',
       }
     }
-    axios.post(url,body,config).then((res)=>{ 
+    axios.post(url,body,config).then(async(res)=>{ 
         console.log("La respuesta del backend ",res.data)
+        await AsyncStorage.setItem('userEmail', email);
         navigation.navigate('Home');
       })
       .catch((error)=>{

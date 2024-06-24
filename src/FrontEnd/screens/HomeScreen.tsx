@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, TouchableOpacity, FlatList, Text, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Image, TouchableOpacity, FlatList, Text, TextInput, Alert, ActivityIndicator, Button } from 'react-native';
 import { Card, IconButton } from 'react-native-paper';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationProp } from '@react-navigation/native';
 import HomeScreenStyles from '../styles/HomeScreenStyles';
 import api from '../../api';
+import axios from 'axios';
 
 interface Listing {
-  _id: string; // Asumiendo que el id es un string
+  _id: string; // Assuming id is a string
   owner: string;
   nombre: string;
   categoria: string;
@@ -18,6 +19,18 @@ interface Listing {
   horario: string;
   rating: number;
   cantidadPersonas: number;
+  fechaEntrada: string;
+  fechaSalida: string;
+}
+
+interface Reservation {
+  _id: string;
+  correoCliente: string;
+  owner: string;
+  nombre: string;
+  categoria: string;
+  ubicacion: string;
+  precio: number;
   fechaEntrada: string;
   fechaSalida: string;
 }
@@ -32,21 +45,24 @@ const categoryMap: { [key: string]: string } = {
   terrain: 'Camping',
   'trending-up': 'Tendencias',
   whatshot: 'Condominio',
-  
 };
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [search, setSearch] = useState('');
   const [selectedNavItem, setSelectedNavItem] = useState<number | null>(null);
   const [filteredCategory, setFilteredCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [favorites, setFavorites] = useState<string[]>([]); // Estado para los lugares favoritos
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false); // Estado para mostrar solo favoritos
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [showReservations, setShowReservations] = useState<boolean>(false);
 
   useEffect(() => {
     fetchListings();
-    loadFavorites(); // Cargar favoritos al montar el componente
+    loadFavorites();
+    fetchUserEmail();
   }, []);
 
   const fetchListings = async () => {
@@ -57,7 +73,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       console.error('Error fetching listings:', error);
       Alert.alert('Error', 'No se pudo obtener la lista de lugares');
     } finally {
-      setLoading(false); // Set loading to false after fetching is complete
+      setLoading(false);
     }
   };
 
@@ -83,28 +99,102 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const toggleFavorite = (id: string) => {
     const index = favorites.indexOf(id);
     if (index === -1) {
-      // No está en favoritos, agregarlo
       const updatedFavorites = [...favorites, id];
       setFavorites(updatedFavorites);
-      saveFavorites(updatedFavorites); // Guardar en AsyncStorage
+      saveFavorites(updatedFavorites);
     } else {
-      // Ya está en favoritos, quitarlo
       const updatedFavorites = [...favorites];
       updatedFavorites.splice(index, 1);
       setFavorites(updatedFavorites);
-      saveFavorites(updatedFavorites); // Guardar en AsyncStorage
+      saveFavorites(updatedFavorites);
     }
   };
 
-  const handleNavItemPress = (index: number, category: string) => {
+  const fetchUserEmail = async () => {
+    try {
+      const email = await AsyncStorage.getItem('userEmail');
+      setUserEmail(email);
+    } catch (error) {
+      console.error('Error fetching user email:', error);
+    }
+  };
+
+  const fetchUserReservations = async (email: string) => {
+    try {
+      const email = await AsyncStorage.getItem('userEmail');
+      setUserEmail(email);
+    } catch (error) {
+      console.error('Error fetching user email:', error);
+    }
+  };
+
+  const handleReserve = async (listing: Listing) => {
+    if (!userEmail) {
+      Alert.alert('Error', 'Usuario no autenticado');
+      return;
+    }
+    try {
+      // await firebase.auth().signInWithEmailAndPassword(email, password);
+      let url = "https://1b3b-2803-4600-1113-2a7-e0d7-8c90-ab14-7b98.ngrok-free.app/createReserva"; 
+      console.log("SENDING TO BACKEND",url)
+  
+      const body = {
+        correoCliente: userEmail,
+        owner: listing.owner,
+        nombre: listing.nombre,
+        categoria: listing.categoria,
+        ubicacion: listing.ubicacion,
+        precio: listing.precio,
+        fechaEntrada: listing.fechaEntrada,
+        fechaSalida: listing.fechaSalida,
+      }
+  
+      const config = {
+        headers: {
+          'Content-Type': ' application/x-www-form-urlencoded',
+      }
+    }
+    axios.post(url,body,config).then(async(res)=>{ 
+        console.log("La respuesta del backend ",res.data)
+        Alert.alert("Reserva realizada con éxito!","Disfrute su viaje")
+
+      })
+      .catch((error)=>{
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Response error:', error.response.data);
+          console.error('Status:', error.response.status);
+          console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+          // The request was made but no response was received
+          console.error('No response:', error.request);
+      } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('Error', error.message);
+      }
+      console.error('Config:', error.config);
+  
+      } )
+    } catch (error) {
+      
+    }    
+  };
+
+  const handleNavItemPress = async (index: number, category: string) => {
     setSelectedNavItem(index);
     setFilteredCategory(categoryMap[category] || null);
 
-    // Mostrar solo favoritos cuando se presiona 'Wishlist'
     if (index === 5) { // Índice 5 corresponde a 'favorite'
       setShowFavoritesOnly(true);
+    } else if (index === 2) { // Índice 2 corresponde a 'trips'
+      if (userEmail) {
+        await fetchUserReservations(userEmail);
+        setShowReservations(true);
+      }
     } else {
       setShowFavoritesOnly(false);
+      setShowReservations(false);
     }
   };
 
@@ -127,35 +217,46 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     return filtered;
   };
 
+  const filterReservedListings = () => {
+    if (reservations.length === 0) return [];
+    return listings.filter((listing) => 
+      reservations.some((reservation) => reservation.nombre === listing.nombre)
+    );
+  };
+
   const renderItem = ({ item }: { item: Listing }) => (
-    //<TouchableOpacity onPress={() => navigation.navigate('Details', { item })}>
-      <Card style={HomeScreenStyles.card}>
-        <Image source={{ uri: item.url }} style={HomeScreenStyles.image} />
-        <Card.Content>
-          <View style={HomeScreenStyles.textContainer}>
-            <Text style={HomeScreenStyles.location}>{item.ubicacion}</Text>
-            <Text style={HomeScreenStyles.host}>
-              Stay with {item.owner} · {item.fechaEntrada} to {item.fechaSalida}
-            </Text>
-            <Text style={HomeScreenStyles.price}>{item.precio} total</Text>
-            <View style={HomeScreenStyles.ratingContainer}>
-              <MaterialIcons name="star" size={20} color="gold" />
-              <Text style={HomeScreenStyles.rating}>{item.rating}</Text>
-            </View>
+    <Card style={HomeScreenStyles.card}>
+      <Image source={{ uri: item.url }} style={HomeScreenStyles.image} />
+      <Card.Content>
+        <View style={HomeScreenStyles.textContainer}>
+          <Text style={HomeScreenStyles.location}>{item.ubicacion}</Text>
+          <Text style={HomeScreenStyles.host}>
+            Stay with {item.owner} · {item.fechaEntrada} to {item.fechaSalida}
+          </Text>
+          <Text style={HomeScreenStyles.price}>{item.precio} total</Text>
+          <View style={HomeScreenStyles.ratingContainer}>
+            <MaterialIcons name="star" size={20} color="gold" />
+            <Text style={HomeScreenStyles.rating}>{item.rating}</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => toggleFavorite(item._id)}
-            style={{ position: 'absolute', top: 10, right: 10 }}
-          >
-            <MaterialIcons
-              name={favorites.includes(item._id) ? 'favorite' : 'favorite-border'}
-              size={24}
-              color={favorites.includes(item._id) ? '#FF0000' : '#000000'}
-            />
-          </TouchableOpacity>
-        </Card.Content>
-      </Card>
-    //</TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          onPress={() => toggleFavorite(item._id)}
+          style={{ position: 'absolute', top: 10, right: 10 }}
+        >
+          <MaterialIcons
+            name={favorites.includes(item._id) ? 'favorite' : 'favorite-border'}
+            size={24}
+            color={favorites.includes(item._id) ? '#FF0000' : '#000000'}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handleReserve(item)}
+          style={HomeScreenStyles.reserveButton}
+        >
+          <Text style={HomeScreenStyles.reserveButtonText}>Reservar</Text>
+        </TouchableOpacity>
+      </Card.Content>
+    </Card>
   );
 
   return (
@@ -206,7 +307,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <FlatList
-          data={filterListings()}
+          data={showReservations ? filterReservedListings() : filterListings()}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           ListFooterComponent={() => (
@@ -219,7 +320,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         />
       )}
       <View style={HomeScreenStyles.navbarBottom}>
-        {['favorite','home',  'flight-takeoff', 'mail', 'person'].map(
+        {['favorite', 'home', 'flight-takeoff', 'mail', 'person'].map(
           (iconName, index) => (
             <TouchableOpacity
               key={iconName}
@@ -262,3 +363,4 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 };
 
 export default HomeScreen;
+
